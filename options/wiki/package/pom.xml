@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.sling.pages.options</groupId>
+        <artifactId>composum-sling-pages-options-wiki</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>composum-sling-pages-options-wiki-package</artifactId>
+    <packaging>content-package</packaging>
+
+    <name>Composum Pages Options - Wiki Package</name>
+
+    <build>
+        <resources>
+
+            <resource>
+                <directory>${basedir}/src/main/content/jcr_root</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/.vlt*</exclude>
+                    <exclude>**/.DS_Store</exclude>
+                    <exclude>**/.gitignore</exclude>
+                    <exclude>**/*.scss</exclude>
+                </excludes>
+            </resource>
+
+            <resource>
+                <directory>${basedir}/src/main/content/META-INF</directory>
+                <targetPath>../vault-work/META-INF</targetPath>
+            </resource>
+
+            <resource>
+                <directory>${project.build.directory}/generated-css/jcr_root</directory>
+                <excludes>
+                    <exclude>**/*.map</exclude>
+                    <exclude>**/mixins.css</exclude>
+                    <exclude>**/variables.css</exclude>
+                </excludes>
+            </resource>
+
+        </resources>
+        <plugins>
+
+            <plugin>
+                <groupId>nl.geodienstencentrum.maven</groupId>
+                <artifactId>sass-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-css</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>update-stylesheets</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.samaxes.maven</groupId>
+                <artifactId>minify-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+                <configuration>
+
+                    <group>${package.group}</group>
+                    <properties>
+                        <createdBy>${package.company}</createdBy>
+                    </properties>
+
+                    <filters>
+                        <filter>
+                            <root>/libs/composum/pages/options/wiki</root>
+                        </filter>
+                        <filter>
+                            <root>/libs/composum/pages/install</root>
+                            <includes>
+                                <include>.*/composum-sling-pages-options-wiki-bundle.*\.jar</include>
+                            </includes>
+                        </filter>
+                    </filters>
+
+                    <embeddeds>
+                        <embedded>
+                            <groupId>com.composum.sling.pages.options</groupId>
+                            <artifactId>composum-sling-pages-options-wiki-bundle</artifactId>
+                            <target>/libs/composum/pages/install</target>
+                        </embedded>
+                    </embeddeds>
+
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+    <dependencies>
+
+        <!-- Composum Pages -->
+        <dependency>
+            <groupId>com.composum.sling.pages.options</groupId>
+            <artifactId>composum-sling-pages-options-wiki-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.composum.sling.pages</groupId>
+            <artifactId>composum-sling-pages-commons-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Composum Core -->
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-core-commons</artifactId>
+        </dependency>
+
+        <!-- Taglib support -->
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.scripting.jsp.taglib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installBundle</id>
+        </profile>
+        <profile>
+            <id>installPackage</id>
+            <activation>
+                <property>
+                    <name>deploy.package</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.day.jcr.vault</groupId>
+                        <artifactId>content-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-content-package</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>installTestContent</id>
+        </profile>
+
+    </profiles>
+</project>

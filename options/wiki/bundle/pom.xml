@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.sling.pages.options</groupId>
+        <artifactId>composum-sling-pages-options-wiki</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>composum-sling-pages-options-wiki-bundle</artifactId>
+    <packaging>bundle</packaging>
+
+    <name>Composum Pages Options - Wiki Bundle</name>
+    <description>Wiki components implementation</description>
+
+    <properties>
+        <bundle.name>com.composum.pages.options.wiki</bundle.name>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-scr-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Category>${bundle.category}</Bundle-Category>
+                        <Bundle-SymbolicName>${bundle.name}</Bundle-SymbolicName>
+                        <Include-Resource>
+                            {maven-resources}
+                        </Include-Resource>
+                        <Export-Package>
+                            com.composum.pages.options.wiki.*
+                        </Export-Package>
+                        <Import-Package>
+                            org.apache.sling.api.adapter.*;version="[2.2.0,3)",
+                            org.apache.sling.api.request.*;version="[2.4.1,3)",
+                            org.apache.sling.api.resource.*;version="[2.8.0,3)",
+                            org.apache.sling.api.scripting.*;version="[2.1.1,3)",
+                            org.apache.sling.api.servlets.*;version="[2.1.1,3)",
+                            org.apache.sling.api.*;version="[2.2.2,3)",
+                            javax.annotation.*;version="[0,4)",
+                            org.apache.sling.*,
+                            org.apache.commons.*,
+                            com.composum.pages.commons.*,
+                            com.composum.sling.core.*,
+                            org.slf4j.*,
+                            javax.*
+                        </Import-Package>
+                        <Sling-Model-Packages>
+                            com.composum.pages.options.wiki.model
+                        </Sling-Model-Packages>
+                        <Embed-Dependency>
+                            *;scope=compile|runtime
+                        </Embed-Dependency>
+                        <Embed-Transitive>true</Embed-Transitive>
+                    </instructions>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.source}</source>
+                    <target>${java.target}</target>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+    <dependencies>
+
+        <!-- WikiText -->
+        <dependency>
+            <groupId>org.eclipse.mylyn.wikitext</groupId>
+            <artifactId>wikitext.core</artifactId>
+            <version>${wikitext.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mylyn.wikitext</groupId>
+            <artifactId>wikitext.html.core</artifactId>
+            <version>${wikitext.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mylyn.wikitext</groupId>
+            <artifactId>wikitext.confluence.core</artifactId>
+            <version>${wikitext.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mylyn.wikitext</groupId>
+            <artifactId>wikitext.markdown.core</artifactId>
+            <version>${wikitext.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mylyn.wikitext</groupId>
+            <artifactId>wikitext.mediawiki.core</artifactId>
+            <version>${wikitext.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mylyn.wikitext</groupId>
+            <artifactId>wikitext.textile.core</artifactId>
+            <version>${wikitext.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mylyn.wikitext</groupId>
+            <artifactId>wikitext.twiki.core</artifactId>
+            <version>${wikitext.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mylyn.wikitext</groupId>
+            <artifactId>wikitext.tracwiki.core</artifactId>
+            <version>${wikitext.version}</version>
+        </dependency>
+
+        <!-- PegDown -->
+        <dependency>
+            <groupId>org.pegdown</groupId>
+            <artifactId>pegdown</artifactId>
+            <version>${pegdown.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>15.0</version>
+        </dependency>
+
+        <!-- Composum Pages -->
+        <dependency>
+            <groupId>com.composum.sling.pages</groupId>
+            <artifactId>composum-sling-pages-commons-bundle</artifactId>
+        </dependency>
+
+        <!-- Composum Core -->
+        <dependency>
+            <groupId>com.composum.sling.core</groupId>
+            <artifactId>composum-sling-core-commons</artifactId>
+        </dependency>
+
+        <!-- Sling, JCR -->
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.mime</artifactId>
+        </dependency>
+
+        <!-- JCR API, Jackrabbit -->
+        <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+        </dependency>
+
+        <!-- Apache commons -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+
+        <!-- Web Application API -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+        </dependency>
+
+        <!-- OSGi, Felix -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.component.annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.metatype.annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.scr</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.scr.annotations</artifactId>
+        </dependency>
+
+        <!-- Java Annotations -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+        </dependency>
+
+    </dependencies>
+    <profiles>
+
+        <profile>
+            <id>installBundle</id>
+        </profile>
+        <profile>
+            <id>installPackage</id>
+        </profile>
+        <profile>
+            <id>installTestContent</id>
+        </profile>
+
+    </profiles>
+</project>

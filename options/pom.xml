@@ -16,6 +16,7 @@
 
     <modules>
         <module>microsite</module>
+        <module>wiki</module>
     </modules>
 
 </project>

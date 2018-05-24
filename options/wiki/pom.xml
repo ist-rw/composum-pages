@@ -1,0 +1,55 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
+	<modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.composum.sling.pages.options</groupId>
+        <artifactId>composum-sling-pages-options</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+	<artifactId>composum-sling-pages-options-wiki</artifactId>
+    <packaging>pom</packaging>
+
+	<name>Composum Pages Options - Wiki</name>
+
+	<properties>
+		<composum.pages.version>1.0.0-SNAPSHOT</composum.pages.version>
+        <pegdown.version>1.6.0</pegdown.version>
+        <wikitext.version>2.6.0</wikitext.version>
+	</properties>
+
+	<modules>
+		<module>bundle</module>
+		<module>package</module>
+	</modules>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Composum Pages -->
+            <dependency>
+                <groupId>com.composum.sling.pages</groupId>
+                <artifactId>composum-sling-pages-commons-bundle</artifactId>
+                <version>${composum.pages.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Sling, JCR -->
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.api</artifactId>
+                <version>2.16.2</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.commons.mime</artifactId>
+                <version>2.1.10</version>
+                <scope>provided</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+</project>
