@@ -4,9 +4,7 @@
 <'sling'='http://sling.apache.org/jcr/sling/1.0'>
 <'cpp'='http://sling.composum.com/pages/1.0'>
 
-[cpp:Statistics] > sling:Resource, nt:unstructured
-
-[cpp:StatsData] > sling:Resource, nt:unstructured
+[cpp:MetaData] > sling:Resource, nt:unstructured
 
 [cpp:Element] > sling:Resource, nt:unstructured
 

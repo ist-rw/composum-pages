@@ -1,10 +1,12 @@
 package com.composum.pages.commons.service;
 
 import com.composum.pages.commons.model.Page;
+import com.composum.pages.commons.replication.ReplicationManager;
 import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.util.ResourceUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
@@ -35,6 +37,10 @@ import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.composum.pages.commons.PagesConstants.META_NODE_NAME;
+import static com.composum.pages.commons.PagesConstants.META_NODE_TYPE;
+import static com.composum.sling.platform.security.PlatformAccessFilter.ACCESS_MODE_PUBLIC;
+
 @Component(
         property = {
                 Constants.SERVICE_DESCRIPTION + "=Composum Pages Tracking Service"
@@ -43,17 +49,12 @@ import java.util.List;
 @Designate(ocd = PagesTrackingService.Config.class)
 public class PagesTrackingService implements TrackingService {
 
-    public static final String STATS_NODE_NAME = "cpp:statistics";
-    public static final String STATS_NODE_TYPE = "cpp:Statistics";
-    public static final String STATS_DATA_TYPE = "cpp:StatsData";
+    private static final Logger LOG = LoggerFactory.getLogger(PagesTrackingService.class);
 
-    public static final String PAGE_STATS_PATH = "y-%04d/m-%02d/d-%02d";
-    public static final String PAGE_STATS_HOUR = "h-%02d";
-    public static final String INTERMEDIATE_TYPE = "nt:unstructured";
+    public static final String INTERMEDIATE_TYPE = JcrConstants.NT_UNSTRUCTURED;
 
     public static final String SA_SESSION_TRACE = SessionTrace.class.getName();
-
-    private static final Logger LOG = LoggerFactory.getLogger(PagesTrackingService.class);
+    public static final int MAX_TRACE_SIZE = 100;
 
     @ObjectClassDefinition(name = "Composum Pages Tracking Service Configuration",
             description = "Configurations for the Composum Pages Tracking Service")
@@ -116,6 +117,9 @@ public class PagesTrackingService implements TrackingService {
         protected final List<TraceToken> trace = new LinkedList<>();
 
         public void addRequest(TokenRequest request) {
+            while (trace.size() >= MAX_TRACE_SIZE) {
+                trace.remove(0);
+            }
             trace.add(new TraceToken(request));
         }
 
@@ -133,8 +137,12 @@ public class PagesTrackingService implements TrackingService {
     @Reference
     protected ResourceResolverFactory resolverFactory;
 
+    @Reference
+    protected ReplicationManager replicationManager;
+
     protected Config config;
 
+    @Override
     public void trackToken(BeanContext context,
                            String path,
                            String referer)
@@ -143,8 +151,18 @@ public class PagesTrackingService implements TrackingService {
             LOG.debug("trackToken(" + path + ")");
         }
         try (ResourceResolver resolver = resolverFactory.getServiceResourceResolver(null)) {
+
+            context = new BeanContext.Wrapper(context, resolver);
+
             Resource resource = resolver.getResource(path);
             if (resource != null) {
+
+                Resource origin = replicationManager.getOrigin(context, resource, ACCESS_MODE_PUBLIC);
+                if (origin != null) {
+                    // use origin instead of replicate to track - collect statistics on the author resource
+                    resource = origin;
+                }
+
                 if (Page.isPage(resource)) {
                     trackPage(new TokenRequest(context, resource, referer));
                 } else if (Page.isPageContent(resource)) {
@@ -157,10 +175,13 @@ public class PagesTrackingService implements TrackingService {
                 } else {
                     LOG.warn("unexpected token: " + path);
                 }
+
                 resolver.commit();
+
             } else {
                 LOG.error("resource not found: " + path);
             }
+
         } catch (PersistenceException ex) {
             LOG.error(ex.getMessage(), ex);
         }
@@ -174,14 +195,11 @@ public class PagesTrackingService implements TrackingService {
             SlingHttpServletRequest request = token.context.getRequest();
 
             Resource statistics = getStatistics(token.context, token.resource);
-            Resource contentStats = getStatsData(statistics, token, "jcr:content");
+            Resource dayStatistics = getDayStatistics(statistics, token);
 
             // count page assess for each hour of a day
             String hourlyPath = new Formatter().format(PAGE_STATS_HOUR, token.hour).toString();
-            Resource hourlyStats = ResourceUtil.getOrCreateChild(
-                    contentStats,
-                    hourlyPath,
-                    INTERMEDIATE_TYPE);
+            Resource hourlyStats = ResourceUtil.getOrCreateChild(dayStatistics, hourlyPath, INTERMEDIATE_TYPE);
 
             ModifiableValueMap hourlyValues = hourlyStats.adaptTo(ModifiableValueMap.class);
             hourlyValues.put(PROP_TOTAL, hourlyValues.get(PROP_TOTAL, 0) + 1);
@@ -192,10 +210,8 @@ public class PagesTrackingService implements TrackingService {
             // count page access requests from one referer (daily count)
             if (StringUtils.isNotBlank(token.referer)) {
                 String refererUrl = new String(Base64.decodeBase64(token.referer.getBytes()), CHARSET);
-                refererStats = ResourceUtil.getOrCreateChild(
-                        contentStats,
-                        "referer/" + token.referer,
-                        INTERMEDIATE_TYPE);
+                refererStats = ResourceUtil.getOrCreateChild(dayStatistics,
+                        "referer/" + token.referer, INTERMEDIATE_TYPE);
                 refererStatsValues = refererStats.adaptTo(ModifiableValueMap.class);
                 refererStatsValues.put(PROP_URL, refererUrl);
                 refererStatsValues.put(PROP_TOTAL, refererStatsValues.get(PROP_TOTAL, 0) + 1);
@@ -226,7 +242,12 @@ public class PagesTrackingService implements TrackingService {
                 default:
                     // use session instead of special cookies (one 'technical' session cookie only)
                     HttpSession session = request.getSession(true);
-                    SessionTrace trace = (SessionTrace) session.getAttribute(SA_SESSION_TRACE);
+                    SessionTrace trace = null;
+                    try {
+                        trace = (SessionTrace) session.getAttribute(SA_SESSION_TRACE);
+                    } catch (ClassCastException ccex) {
+                        // ok, ignore and reset
+                    }
                     if (trace == null) {
                         trace = new SessionTrace();
                         session.setAttribute(SA_SESSION_TRACE, trace);
@@ -260,12 +281,13 @@ public class PagesTrackingService implements TrackingService {
             throws RepositoryException {
         PageManager pageManager = context.getService(PageManager.class);
         Resource page = pageManager.getContainingPageResource(requested);
-        Resource statistics = page.getChild(STATS_NODE_NAME);
+        Resource cppMeta = page.getChild(META_NODE_NAME);
+        if (cppMeta == null) {
+            cppMeta = ResourceUtil.getOrCreateChild(page, META_NODE_NAME, META_NODE_TYPE);
+        }
+        Resource statistics = cppMeta.getChild(STATS_NODE_NAME);
         if (statistics == null) {
-            statistics = ResourceUtil.getOrCreateChild(
-                    page,
-                    STATS_NODE_NAME,
-                    STATS_NODE_TYPE);
+            statistics = ResourceUtil.getOrCreateChild(cppMeta, STATS_NODE_NAME, INTERMEDIATE_TYPE);
         }
         return statistics;
     }
@@ -273,20 +295,13 @@ public class PagesTrackingService implements TrackingService {
     /**
      * returns the resource to store statistics data for the given path; uses the token to build the 'calendar path'
      */
-    protected Resource getStatsData(Resource statistics, TokenRequest token, String relativePath)
+    protected Resource getDayStatistics(Resource statistics, TokenRequest token)
             throws RepositoryException {
         String pathToDay = new Formatter().format(PAGE_STATS_PATH,
                 token.year, token.month, token.day).toString();
-        Resource dayStatistics = ResourceUtil.getOrCreateChild(
-                statistics,
-                pathToDay,
-                INTERMEDIATE_TYPE);
         @SuppressWarnings("UnnecessaryLocalVariable")
-        Resource statsData = ResourceUtil.getOrCreateChild(
-                dayStatistics,
-                relativePath,
-                STATS_DATA_TYPE);
-        return statsData;
+        Resource dayStatistics = ResourceUtil.getOrCreateChild(statistics, pathToDay, INTERMEDIATE_TYPE);
+        return dayStatistics;
     }
 
     @Activate

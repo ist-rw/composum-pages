@@ -2,17 +2,18 @@ package com.composum.pages.commons.taglib;
 
 import com.composum.pages.commons.model.Page;
 import com.composum.pages.commons.model.properties.Languages;
-import com.composum.pages.commons.request.AccessMode;
 import com.composum.pages.commons.request.DisplayMode;
-import com.composum.pages.commons.request.RequestAspect;
-import com.composum.pages.commons.request.RequestLocale;
 import com.composum.pages.commons.service.PageManager;
 import com.composum.sling.core.BeanContext;
-import com.composum.sling.platform.security.PlatformAccessFilter;
+import com.composum.sling.platform.security.AccessMode;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 
 import javax.servlet.jsp.PageContext;
+import java.util.Locale;
+
+import static com.composum.pages.commons.PagesConstants.FRAME_CONTEXT_ATTR;
+import static com.composum.pages.commons.PagesConstants.PAGES_LOCALE_ATTR;
 
 public class DefineObjectsTag extends org.apache.sling.scripting.jsp.taglib.DefineObjectsTag {
 
@@ -34,12 +35,13 @@ public class DefineObjectsTag extends org.apache.sling.scripting.jsp.taglib.Defi
     public int doEndTag() {
         int result = super.doEndTag();
         context = createContext(pageContext);
+        SlingHttpServletRequest request = context.getRequest();
 
         context.setAttribute(CONTEXT_PATH, context.getRequest().getContextPath(), BeanContext.Scope.request);
-        PlatformAccessFilter.AccessMode accessMode = AccessMode.get(context);
-        context.setAttribute(PAGES_AUTHOR, accessMode == PlatformAccessFilter.AccessMode.AUTHOR
+        AccessMode accessMode = request.adaptTo(AccessMode.class);
+        context.setAttribute(PAGES_AUTHOR, accessMode == AccessMode.AUTHOR
                 ? Boolean.TRUE : Boolean.FALSE, BeanContext.Scope.request);
-        context.setAttribute(PAGES_PUBLIC, accessMode == PlatformAccessFilter.AccessMode.PUBLIC
+        context.setAttribute(PAGES_PUBLIC, accessMode == AccessMode.PUBLIC
                 ? Boolean.TRUE : Boolean.FALSE, BeanContext.Scope.request);
 
         DisplayMode.Value displayMode = DisplayMode.current(context);
@@ -52,7 +54,7 @@ public class DefineObjectsTag extends org.apache.sling.scripting.jsp.taglib.Defi
         context.setAttribute(PAGES_MODE_DEVELOP, displayMode == DisplayMode.Value.DEVELOP
                 ? Boolean.TRUE : Boolean.FALSE, BeanContext.Scope.request);
 
-        RequestLocale.get(context);
+        request.adaptTo(Locale.class);
         setCurrentPage();
         setLanguages();
 
@@ -61,7 +63,7 @@ public class DefineObjectsTag extends org.apache.sling.scripting.jsp.taglib.Defi
 
     protected BeanContext createContext(PageContext pageContext) {
         BeanContext context = new BeanContext.Page(pageContext);
-        context.setAttribute(RequestAspect.FRAME_CONTEXT_ATTR + ":" + RequestLocale.ATTRIBUTE_KEY,
+        context.setAttribute(FRAME_CONTEXT_ATTR + ":" + PAGES_LOCALE_ATTR,
                 Boolean.TRUE, BeanContext.Scope.request);
         return context;
     }

@@ -20,6 +20,18 @@ public interface PagesConstants {
 
     String LANGUAGE_KEY = PAGES_PREFIX + "language";
 
+    /** request aspects */
+
+    String ACCESS_MODE_REQ_PARAM = "pages.access";
+    String DISPLAY_MODE_REQ_PARAM = "pages.mode";
+    String LOCALE_REQUEST_PARAM = "pages.locale";
+
+    String ACCESS_MODE_ATTR = "composum.pages.request.access";
+    String DISPLAY_MODE_ATTR = "composum.pages.request.display";
+    String PAGES_LOCALE_ATTR = "composum.pages.request.locale";
+
+    String FRAME_CONTEXT_ATTR = "composum-pages-frame";
+
     /** Component declarations */
 
     String NODE_TYPE_COMPONENT = CPP_PREFIX + "Component";
@@ -38,6 +50,9 @@ public interface PagesConstants {
 
     String NODE_TYPE_PAGE = CPP_PREFIX + "Page";
     String NODE_TYPE_PAGE_CONTENT = CPP_PREFIX + "PageContent";
+
+    String META_NODE_NAME = CPP_PREFIX + "metaData";
+    String META_NODE_TYPE = CPP_PREFIX + "MetaData";
 
     String PROP_ALLOWED_PARENTS = "allowedParents";
     String PROP_ALLOWED_CHILDREN = "allowedChildren";

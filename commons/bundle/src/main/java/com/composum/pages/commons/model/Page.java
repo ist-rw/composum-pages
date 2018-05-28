@@ -9,7 +9,7 @@ import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.filter.ResourceFilter;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.ResourceUtil;
-import com.composum.sling.platform.security.PlatformAccessFilter;
+import com.composum.sling.platform.security.AccessMode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -28,12 +28,15 @@ import static com.composum.pages.commons.PagesConstants.DEFAULT_VIEW_CATEGORY;
 import static com.composum.pages.commons.PagesConstants.LANGUAGE_KEY;
 import static com.composum.pages.commons.PagesConstants.NODE_TYPE_PAGE;
 import static com.composum.pages.commons.PagesConstants.NODE_TYPE_PAGE_CONTENT;
+import static com.composum.pages.commons.PagesConstants.PAGES_PREFIX;
 import static com.composum.pages.commons.PagesConstants.PROP_EDIT_CATEGORY;
 import static com.composum.pages.commons.PagesConstants.PROP_SLING_TARGET;
 import static com.composum.pages.commons.PagesConstants.PROP_VIEW_CATEGORY;
 
 @PropertyDetermineResourceStrategy(Page.ContainingPageResourceStrategy.class)
 public class Page extends ContentDriven<PageContent> implements Comparable<Page> {
+
+    public static final String DISPLAY_MODE_CSS_CLASS = PAGES_PREFIX + "display-mode";
 
     // static resource type determination
 
@@ -192,14 +195,14 @@ public class Page extends ContentDriven<PageContent> implements Comparable<Page>
 
     protected List<String> collectHtmlClasses(List<String> classes) {
         SlingHttpServletRequest request = context.getRequest();
-        PlatformAccessFilter.AccessMode accessMode = PlatformAccessFilter.AccessMode.requestMode(request);
-        if (PlatformAccessFilter.AccessMode.AUTHOR == accessMode) {
+        AccessMode accessMode = AccessMode.requestMode(request);
+        if (AccessMode.AUTHOR == accessMode) {
             DisplayMode.Value displayMode = DisplayMode.requested(context);
             if (displayMode != null) {
                 if (displayMode == DisplayMode.Value.DEVELOP) {
                     displayMode = DisplayMode.Value.EDIT;
                 }
-                classes.add(DisplayMode.ATTRIBUTE_KEY + "_" + displayMode.name());
+                classes.add(DISPLAY_MODE_CSS_CLASS + "_" + displayMode.name());
             }
         }
         String languageKey = getLanguageKey();

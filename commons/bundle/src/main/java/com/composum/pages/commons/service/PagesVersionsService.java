@@ -159,7 +159,7 @@ public class PagesVersionsService implements VersionsService {
                 }
                 findUnreleasedPages(context, page.getResource(), release, result);
             } else if (Folder.isFolder(resource)) {
-                findModifiedPages(context, resource, result);
+                findUnreleasedPages(context, resource, release, result);
             }
         }
     }

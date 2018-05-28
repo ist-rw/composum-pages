@@ -4,7 +4,6 @@ import com.composum.pages.commons.PagesConstants;
 import com.composum.pages.commons.model.properties.Language;
 import com.composum.pages.commons.model.properties.Languages;
 import com.composum.pages.commons.request.DisplayMode;
-import com.composum.pages.commons.request.RequestLocale;
 import com.composum.pages.commons.service.PageManager;
 import com.composum.pages.commons.service.ResourceManager;
 import com.composum.pages.commons.service.SiteManager;
@@ -21,7 +20,7 @@ import com.composum.sling.core.request.DomIdentifiers;
 import com.composum.sling.core.util.LinkUtil;
 import com.composum.sling.core.util.PropertyUtil;
 import com.composum.sling.core.util.ResourceUtil;
-import com.composum.sling.platform.security.PlatformAccessFilter;
+import com.composum.sling.platform.security.AccessMode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -94,7 +93,7 @@ public abstract class AbstractModel implements SlingBean, Model {
     private transient Map<String, Object> inheritedMap;
 
     /** current access mode (author/public) od the contexts request */
-    private transient PlatformAccessFilter.AccessMode accessMode;
+    private transient AccessMode accessMode;
 
     private transient Page currentPage;
     private transient Page containingPage;
@@ -206,20 +205,20 @@ public abstract class AbstractModel implements SlingBean, Model {
     }
 
     public boolean isPublicMode() {
-        PlatformAccessFilter.AccessMode accessMode = getAccessMode();
-        return accessMode != null && accessMode == PlatformAccessFilter.AccessMode.PUBLIC;
+        AccessMode accessMode = getAccessMode();
+        return accessMode != null && accessMode == AccessMode.PUBLIC;
     }
 
     public boolean isAuthorMode() {
-        PlatformAccessFilter.AccessMode accessMode = getAccessMode();
-        return accessMode != null && accessMode == PlatformAccessFilter.AccessMode.AUTHOR;
+        AccessMode accessMode = getAccessMode();
+        return accessMode != null && accessMode == AccessMode.AUTHOR;
     }
 
-    public PlatformAccessFilter.AccessMode getAccessMode() {
+    public AccessMode getAccessMode() {
         if (accessMode == null) {
             String value = (String) context.getRequest().getAttribute(ACCESS_MODE_KEY);
             accessMode = StringUtils.isNotBlank(value)
-                    ? PlatformAccessFilter.AccessMode.valueOf(value)
+                    ? AccessMode.valueOf(value)
                     : null;
         }
         return accessMode;
@@ -390,7 +389,7 @@ public abstract class AbstractModel implements SlingBean, Model {
 
     public Locale getLocale() {
         if (locale == null) {
-            locale = RequestLocale.get(context);
+            locale = context.getRequest().adaptTo(Locale.class);
         }
         return locale;
     }

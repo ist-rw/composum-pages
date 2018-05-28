@@ -29,10 +29,12 @@ public class Site extends ContentDriven<SiteConfiguration> implements Comparable
 
     private static final Logger LOG = LoggerFactory.getLogger(Site.class);
 
-    public enum PublicMode {LIVE, PUBLIC, PREVIEW}
+    public static final String PUBLIC_MODE_IN_PLACE = "inPlace";
+    public static final String PUBLIC_MODE_VERSIONS = "versions";
+    public static final String PUBLIC_MODE_LIVE = "live";
 
     public static final String PROP_PUBLIC_MODE = "publicMode";
-    public static final String DEFAULT_PUBLIC_MODE = PublicMode.PUBLIC.name();
+    public static final String DEFAULT_PUBLIC_MODE = PUBLIC_MODE_IN_PLACE;
 
     public static final String RELEASE_LABEL_PREFIX = "composum-release-";
 
@@ -54,7 +56,7 @@ public class Site extends ContentDriven<SiteConfiguration> implements Comparable
 
     // site attributes
 
-    private transient PublicMode publicMode;
+    private transient String publicMode;
     private transient Homepage homepage;
 
     private transient Collection<Page> modifiedPages;
@@ -130,10 +132,9 @@ public class Site extends ContentDriven<SiteConfiguration> implements Comparable
     /**
      * returns the 'publicMode' property value of this site
      */
-    public PublicMode getPublicMode() {
+    public String getPublicMode() {
         if (publicMode == null) {
-            String propertyValue = getProperty(PROP_PUBLIC_MODE, null, DEFAULT_PUBLIC_MODE);
-            publicMode = PublicMode.valueOf(propertyValue.toUpperCase());
+            publicMode = getProperty(PROP_PUBLIC_MODE, null, DEFAULT_PUBLIC_MODE);
         }
         return publicMode;
     }

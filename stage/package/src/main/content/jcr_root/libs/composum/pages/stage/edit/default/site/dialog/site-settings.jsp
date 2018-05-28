@@ -7,7 +7,8 @@
         <cpp:widget label="Title" property="jcr:title" type="textfield"/>
     </div>
     <div class="col-xs-4">
-        <cpp:widget label="Publish Policy" name="publicMode" type="select" options=",PUBLIC,PREVIEW,LIVE"/>
+        <cpp:widget label="Publish Policy" name="publicMode" type="select"
+                    options=",inPlace:In-Place replication,versions:Versions resolver,live:Live imediately"/>
     </div>
 </div>
 <div class="row">

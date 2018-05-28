@@ -20,6 +20,11 @@ public interface TrackingService {
     String EXT_PNG = ".png";
     Charset CHARSET = Charset.forName("UTF-8");
 
+    String STATS_NODE_NAME = "statistics";
+
+    String PAGE_STATS_PATH = "y-%04d/m-%02d/d-%02d";
+    String PAGE_STATS_HOUR = "h-%02d";
+
     void trackToken(BeanContext context, String path, String referer)
             throws RepositoryException, LoginException;
 }

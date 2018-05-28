@@ -1,9 +1,15 @@
 package com.composum.pages.commons.servlet;
 
+import com.composum.pages.commons.model.Site;
+import com.composum.pages.commons.replication.ReplicationContext;
+import com.composum.pages.commons.replication.ReplicationManager;
+import com.composum.pages.commons.service.SiteManager;
+import com.composum.sling.core.BeanContext;
 import com.composum.sling.core.ResourceHandle;
 import com.composum.sling.core.servlet.AbstractServiceServlet;
 import com.composum.sling.core.servlet.ServletOperation;
 import com.composum.sling.core.servlet.ServletOperationSet;
+import com.composum.sling.platform.security.AccessMode;
 import com.composum.sling.platform.staging.service.ReleaseManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -15,7 +21,9 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -57,8 +65,16 @@ public class ReleaseServlet extends AbstractServiceServlet {
 
     public static final Pattern RELEASE_PATH_PATTERN = Pattern.compile("^(/.*)/jcr:content/releases/(.+)$");
 
+    protected BundleContext bundleContext;
+
+    @Reference
+    private SiteManager siteManager;
+
     @Reference
     private ReleaseManager releaseManager;
+
+    @Reference
+    private ReplicationManager replicationManager;
 
     enum Extension {
         http
@@ -90,6 +106,11 @@ public class ReleaseServlet extends AbstractServiceServlet {
         operations.setOperation(ServletOperationSet.Method.POST, Extension.http, Operation.setpreview, new SetPreviewRelease());
     }
 
+    @Activate
+    private void activate(final BundleContext bundleContext) {
+        this.bundleContext = bundleContext;
+    }
+
     @Override
     protected boolean isEnabled() {
         return true;
@@ -107,12 +128,12 @@ public class ReleaseServlet extends AbstractServiceServlet {
         public void doIt(SlingHttpServletRequest request, SlingHttpServletResponse response, ResourceHandle resource)
                 throws IOException {
             try {
-                final String path = getStringParameter(request, response, "path", "site path is required");
-                if (path == null) return;
+                BeanContext beanContext = new BeanContext.Servlet(getServletContext(), bundleContext, request, response);
 
                 String releaseName = getStringParameter(request, response, "releaseName", "release name is required");
                 if (releaseName == null) return;
 
+                final String accessCategory = getCategoryString();
                 final ResourceResolver resourceResolver = request.getResourceResolver();
                 final Resource releases = resourceResolver.getResource(resource, "jcr:content/releases");
                 for (Resource releaseResource : releases.getChildren()) {
@@ -121,17 +142,31 @@ public class ReleaseServlet extends AbstractServiceServlet {
                     final List<String> cs = new ArrayList<>(Arrays.asList(categories));
                     if (releaseResource.getName().equals(releaseName)) {
                         // set categories to release
-                        if (!cs.contains(getCategoryString())) {
-                            cs.add(getCategoryString());
+                        if (!cs.contains(accessCategory)) {
+                            cs.add(accessCategory);
                         }
-                        valueMap.put("categories", cs.toArray(new String[cs.size()]));
+                        valueMap.put("categories", cs.toArray(new String[0]));
                     } else {
                         //remove release if set
-                        cs.remove(getCategoryString());
-                        valueMap.put("categories", cs.toArray(new String[cs.size()]));
+                        cs.remove(accessCategory);
+                        valueMap.put("categories", cs.toArray(new String[0]));
                     }
                 }
+
+                Site site = siteManager.getContainingSite(beanContext, resource);
+                AccessMode accessMode = AccessMode.valueOf(accessCategory.toUpperCase());
+                if (LOG.isInfoEnabled()) {
+                    LOG.info("replication of '{}' for {}...", site.getPath(), accessMode);
+                }
+                ReplicationContext replicationContext = new ReplicationContext(beanContext, site, accessMode);
+                replicationManager.replicateResource(replicationContext, site.getResource(), true);
+                replicationManager.replicateReferences(replicationContext);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("replication of '{}' for {} done.", resource.getPath(), accessMode);
+                }
+
                 resourceResolver.commit();
+
             } catch (Exception e) {
                 LOG.error("error setting release category: " + e.getMessage(), e);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());

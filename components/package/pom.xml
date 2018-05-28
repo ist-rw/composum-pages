@@ -128,6 +128,12 @@
             <artifactId>composum-sling-core-commons</artifactId>
         </dependency>
 
+        <!-- JSON -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+
         <!-- Taglib support -->
         <dependency>
             <groupId>org.apache.sling</groupId>
